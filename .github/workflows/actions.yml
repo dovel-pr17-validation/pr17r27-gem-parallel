@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql
+    strategy:
+      matrix:
+        ruby: [ '3.3', '3.4', '4.0' ]
+        task: [ 'spec' ]
+        include:
+        - ruby: 3.3 # keep in sync with lowest version
+          task: rubocop
+    name: ${{ matrix.ruby }} rake ${{ matrix.task }}
+    env:
+      BUNDLE_FROZEN: "false"
+    steps:
+    - uses: actions/checkout@v6
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+    - run: bundle exec rake ${{ matrix.task }}
